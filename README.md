@@ -7,6 +7,6 @@ It is only slightly optimized and could possibly be optimized a whole lot more. 
 This is just a fun programming project. It is not meant to be used in malicious ways and I discourage you to use this in any actual games. If you do, however, use it, it's all on you.
 
 # Plans
-I did this just for fun and I have no specific plans for that.
+I did this just for fun and I have no specific plans.
 
 Anyway, the script could utilize a very simple computer vision software to automatically recognize the letters from the screen. It could also utilize some other software to automatically pick the words from the screen using the touchscreen/mouse.
