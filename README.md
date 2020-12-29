@@ -1,5 +1,5 @@
 # WordzHunter
-A script that finds words from given letter grid. Can be utilised in Wordz/Sanajahti or similar games - but not recommended!
+A script that finds words from given letter grid. Can be utilised in Wordz/Sanajahti or similar games.
 
 It is only slightly optimized and could possibly be optimized a whole lot more. The script uses a customized of depth-first search method to find the words. The Finnish word list is from [kotus](https://kaino.kotus.fi/sanat/nykysuomi) and contains about Finnish 100 000 words. The `converter.py` script filters out some words that will not appear in the games and the script itself will filter out some 98% of the words based on the current letter grid before running the search.
 
