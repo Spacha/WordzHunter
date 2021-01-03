@@ -4,19 +4,17 @@ import textwrap
 import numpy as np
 from os import path
 
-WORD_FILE = 'lists/words_max16.txt'
-#WORD_FILE = 'lists/words_min3_max10.txt'
+WORD_FILE = 'lists/words_min3_max10.txt'
 CUSTOM_WORD_FILE = 'lists/custom_words.txt'
 
 # Game settings
 MIN_LEN, MAX_LEN = (3,10)
 GRID_SIZE = 4
-#WORD_FILE = 'lists/sanat_small_test.txt'
-#GRID_SIZE = 3
 
 # Timing
 matcher_t = 0
 reduction_t = 0
+testmode = False
 
 class Grid:
 	def __init__(self, letters):
@@ -107,7 +105,7 @@ def get_filtered_words(letters):
 	words = np.array(words, dtype=str)
 	print("Reduced set: {}".format( len(words) ))
 	print("Reduction time: {} s\n".format( time.time() - start_t ))
-	reduction_t += time.time() - start_t
+	if testmode: reduction_t += time.time() - start_t
 	return words
 
 grid = None
@@ -130,11 +128,11 @@ def visit_next(x,y, neighbor):
 			if test_word not in found:
 				found.append(test_word)
 		
-		start_t = time.time()
+		if testmode: start_t = time.time()
 		if not start_of_word(test_word, words):
 			if verbose: print("Reversing, no words for this combination...")
 			return
-		matcher_t += time.time() - start_t
+		if testmode: matcher_t += time.time() - start_t
 		
 		# get next neighbor
 		neighbor, nx, ny = grid.get_next_neighbor(x,y, done_neighbors)
@@ -203,8 +201,8 @@ def print_results(results, found_total, sorting, time_total):
 #                    MAIN                        
 #################################################
 
-def main(letters, testmode, testfile, sorting):
-	global grid, found, words, verbose
+def main(letters, testfile, sorting):
+	global grid, found, words, verbose, testmode
 
 	if testmode:
 		grid_list = get_test_grids(testfile)
@@ -273,4 +271,4 @@ if __name__ == "__main__":
 	if not testmode and len(letters) != GRID_SIZE**2:
 		raise ValueError("Invalid list dimensions! Make sure to give exactly {} letters.".format(GRID_SIZE**2))
 
-	main( letters, testmode, testfile, sorting )
+	main( letters, testfile, sorting )
