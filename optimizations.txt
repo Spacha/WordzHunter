@@ -1,0 +1,24 @@
+Ideas for optimizations:
+	Order the word list by most common words instead of alphabetic
+		OR keep it alphabetic but make a "shortcut" list that has the index of
+		certain starts so the checker could jump straight there
+
+1. We had 88 908 words (max 16):
+	Total TEST time: 156.59489011764526 s
+	Ran 35 searches
+	Found 1629 words
+	Average search time: 4.474139717647008 s
+		Reduction time 0.10139052527291434 s, 2.3 %
+		Matcher time 2.644977194922311 s, 59.1 %
+		Rest 1.7277719974517822 s, 38.6 %
+
+2. Now we have 42 750 words (min 3, max 10)
+	Total TEST time: 112.99340629577637 s
+	Ran 35 searches
+	Found 1623 words
+	Average search time: 3.2283830370221818 s
+		Reduction time 0.04555885451180594 s, 1.4 %
+		Matcher time 1.9144829886300223 s, 59.3 %
+		Rest 1.2683411938803537 s, 39.3 %
+	-> On average, 27.8 % faster
+	-> The speed up came from the reduction phase

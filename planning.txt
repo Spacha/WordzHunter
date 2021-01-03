@@ -1,0 +1,4 @@
+Sanajahti:
+	Length of the words is always 3-10
+	-> Number of words reduced from 94 110 to 42 750 = 55 % reduction
+	Letterss in use: [A, B, ..., Å, Ä, Ö] (29)

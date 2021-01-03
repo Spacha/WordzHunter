@@ -2,12 +2,21 @@ import time
 import argparse
 import textwrap
 import numpy as np
+from os import path
 
 WORD_FILE = 'lists/words_max16.txt'
+#WORD_FILE = 'lists/words_min3_max10.txt'
 CUSTOM_WORD_FILE = 'lists/custom_words.txt'
+
+# Game settings
+MIN_LEN, MAX_LEN = (3,10)
 GRID_SIZE = 4
 #WORD_FILE = 'lists/sanat_small_test.txt'
 #GRID_SIZE = 3
+
+# Timing
+matcher_t = 0
+reduction_t = 0
 
 class Grid:
 	def __init__(self, letters):
@@ -56,7 +65,6 @@ class Grid:
 		return (k % GRID_SIZE, k // GRID_SIZE)
 
 
-
 def contains_all(letters, word):
 	""" Check whether sequence @letters contains ALL of the items in @word. """
 	return 0 not in [c in letters for c in word]
@@ -65,7 +73,26 @@ def start_of_word(word, words):
 	""" Check whether sequence @word is a valid start of any item in @words. """
 	return 1 in [w.startswith(word) for w in words]
 
+def get_test_grids(testfile):
+	""" . """
+	grids = []
+
+	# minimum word length is 3
+	with open(testfile, 'r') as f:
+		for line in f:
+			line = line.lower().strip()
+			if len(line) == GRID_SIZE**2:
+				grids.append(line)
+	return grids
+
 def get_filtered_words(letters):
+	"""
+	Load the word list from a file and, to speed up the search, reduce the
+	word list by filtering out the words that cannot be formed using the
+	available letters.
+	"""
+	global reduction_t
+
 	start_t = time.time()
 	words = []
 
@@ -79,7 +106,8 @@ def get_filtered_words(letters):
 
 	words = np.array(words, dtype=str)
 	print("Reduced set: {}".format( len(words) ))
-	print("Time: {} s\n".format( time.time() - start_t ))
+	print("Reduction time: {} s\n".format( time.time() - start_t ))
+	reduction_t += time.time() - start_t
 	return words
 
 grid = None
@@ -87,7 +115,7 @@ found = []
 words = []
 verbose = False
 def visit_next(x,y, neighbor):
-	global grid, found, words, verbose
+	global grid, found, words, verbose, matcher_t
 
 	if verbose: print("[Deeper] next neighbor for {}...".format(grid.get_current_word()))
 
@@ -102,9 +130,11 @@ def visit_next(x,y, neighbor):
 			if test_word not in found:
 				found.append(test_word)
 		
+		start_t = time.time()
 		if not start_of_word(test_word, words):
 			if verbose: print("Reversing, no words for this combination...")
 			return
+		matcher_t += time.time() - start_t
 		
 		# get next neighbor
 		neighbor, nx, ny = grid.get_next_neighbor(x,y, done_neighbors)
@@ -121,14 +151,42 @@ def visit_next(x,y, neighbor):
 
 	if verbose: print("Reversing, no more neighbors ({})...".format(test_word))
 
-def print_results(results, sort):
-	print("******** FOUND ({}) ********".format(len(found)))
+#################################################
+#                PRINT RESULTS                   
+#################################################
+
+def print_test_results(grid_list, found_total, time_total):
+	""" Print test results. """
+	global matcher_t, reduction_t
+
+	test_runs = len(grid_list)
+	avg_search_t = time_total / test_runs
+	avg_reduction_t = reduction_t / test_runs
+	avg_matcher_t = matcher_t / test_runs
+	avg_other_t = (time_total - reduction_t - matcher_t) / test_runs
+
+	def of_total(t):
+		return round(t / avg_search_t*100, 1)
+
+	print("\nTotal TEST time: {} s".format(time_total))
+	print("\tRan {} searches".format(len(grid_list)))
+	print("\tFound {} words".format(found_total))
+	print("\tAverage search time: {} s".format(avg_search_t))
+	print("\t\tReduction time {} s, {} %".format(avg_reduction_t, of_total(avg_reduction_t)))
+	print("\t\tMatcher time {} s, {} %".format(avg_matcher_t, of_total(avg_matcher_t)))
+	print("\t\tRest {} s, {} %".format(avg_other_t, of_total(avg_other_t)))
+
+
+def print_results(results, found_total, sorting, time_total):
+	""" Print the results in a helpful form. """
+	print("\nTotal time: {} s".format(time_total))
+	print("******** FOUND ({}) ********".format(found_total))
 
 	# sort if necessary - the list is already ordered by 'location'
-	if sort == 'alphabetical':
-		results.sort(results)
-	elif sort == 'length':
-		results.sort(key=len, reverse=True)
+	if sorting == 'alphabetical':
+		results.sorting(results)
+	elif sorting == 'length':
+		results.sorting(key=len, reverse=True)
 
 	for word in results:
 		prefix = ""
@@ -141,46 +199,78 @@ def print_results(results, sort):
 
 		print(prefix + word)
 
+#################################################
+#                    MAIN                        
+#################################################
 
-def main(args):
+def main(letters, testmode, testfile, sorting):
 	global grid, found, words, verbose
-	letters = args.letters.lower()
-	verbose = args.verbose
 
-	# Validate arguments
-	
-	if args.sort == 'alphabetical' or args.sort == 'a':
-		sort = 'alphabetical'
-	elif args.sort == 'length' or args.sort == 'l':
-		sort = 'length'
+	if testmode:
+		grid_list = get_test_grids(testfile)
 	else:
-		sort = 'location'
-
-	if len(letters) != GRID_SIZE**2:
-		raise Exception("Invalid list dimensions! Make sure to give exactly {} letters.".format(GRID_SIZE**2))
+		grid_list = [letters]
 
 	# Find results
-	
-	grid = Grid(letters)
 
-	# optimization: filter out the words that cannot be formet using the available letters
-	words = get_filtered_words(letters)
+	start_t = time.time()
+	found_total = 0
+	for letters in grid_list:
+		grid = Grid(letters)
 
-	found = []
-	for y,row in enumerate(grid.grid):
-		for x,letter in enumerate(row):
-			if verbose: print("New start: {} in ({},{})".format(letter, x, y))
-			grid.visited = [grid.coord_to_key(x,y)]
-			visit_next(x, y, None)
-			grid.clear_visited()
+		# optimize by filtering out the words that cannot
+		# be formed using the available letters
+		words = get_filtered_words(letters)
+
+		found = []
+		for y,row in enumerate(grid.grid):
+			for x,letter in enumerate(row):
+				if verbose: print("New start: {} in ({},{})".format(letter, x, y))
+				grid.visited = [grid.coord_to_key(x,y)]
+				visit_next(x, y, None)
+				grid.clear_visited()
+
+		found_total += len(found)
 
 	# Done!
-	print_results(found, sort)
+	time_total = time.time() - start_t
+	if testmode:
+		print_test_results(grid_list, found_total, time_total)
+	else:
+		print_results(found, found_total, sorting, time_total)
 
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='Win in Sanajahti.')
-	parser.add_argument('letters', type=str, help='the 4x4 grid of the letters as a string')
-	parser.add_argument('-s', '--sort', default='location', type=str, help='sorting of the results (alphabetical | length | location (default))')
+	parser = argparse.ArgumentParser(description="Win in Sanajahti.")
+	parser.add_argument("-i", "--input", default="", type=str, help="the 4x4 grid of the letters as a string, required unless -t is used")
+	parser.add_argument("-s", "--sorting", default="location", type=str, help="sorting of the results (alphabetical | length | location (default))")
 	parser.add_argument("-v", "--verbose", action="store_true")
-	main( parser.parse_args() )
+	parser.add_argument("-t", "--test", default="", type=str, help="run a list of test grids (file name must be given) and print metrics")
+
+	# Validate arguments
+	
+	args = parser.parse_args()
+
+	letters 	= ""
+	testmode 	= False
+	testfile 	= ""
+	sorting 	= "location"
+
+	testmode = len(args.test) > 0
+	if testmode:
+		testfile = args.test
+		if not path.isfile(testfile):
+			raise ValueError("Testfile '{}' not found!".format(testfile))
+
+	letters = args.input.lower()
+	verbose = args.verbose
+
+	if args.sorting == "alphabetical" or args.sorting == "a":
+		sorting = "alphabetical"
+	elif args.sorting == "length" or args.sorting == "l":
+		sorting = "length"
+
+	if not testmode and len(letters) != GRID_SIZE**2:
+		raise ValueError("Invalid list dimensions! Make sure to give exactly {} letters.".format(GRID_SIZE**2))
+
+	main( letters, testmode, testfile, sorting )
