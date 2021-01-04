@@ -4,8 +4,7 @@ import textwrap
 import numpy as np
 from os import path
 
-WORD_FILE = 'lists/words_min3_max10.txt'
-CUSTOM_WORD_FILE = 'lists/custom_words.txt'
+WORD_FILE = 'lists/words_filtered.txt'
 
 # Game settings
 MIN_LEN, MAX_LEN = (3,10)
@@ -94,13 +93,11 @@ def get_filtered_words(letters):
 	start_t = time.time()
 	words = []
 
-	# minimum word length is 3
-	for fname in [WORD_FILE, CUSTOM_WORD_FILE]:
-		with open(fname, 'r') as f:
-			for line in f:
-				line = line.lower().strip()
-				if contains_all(letters, line) and len(line) > 2:
-					words.append(line)
+	with open(WORD_FILE, 'r') as f:
+		for line in f:
+			line = line.lower().strip()
+			if len(line) >= MIN_LEN and contains_all(letters, line):
+				words.append(line)
 
 	words = np.array(words, dtype=str)
 	print("Reduced set: {}".format( len(words) ))
@@ -182,9 +179,9 @@ def print_results(results, found_total, sorting, time_total):
 
 	# sort if necessary - the list is already ordered by 'location'
 	if sorting == 'alphabetical':
-		results.sorting(results)
+		results.sort(results)
 	elif sorting == 'length':
-		results.sorting(key=len, reverse=True)
+		results.sort(key=len, reverse=True)
 
 	for word in results:
 		prefix = ""

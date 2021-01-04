@@ -22,3 +22,13 @@ Ideas for optimizations:
 		Rest 1.2683411938803537 s, 39.3 %
 	-> On average, 27.8 % faster
 	-> The speed up came from the reduction phase
+
+3. Remove words with invalid characters, blacklist etc, got 46 237 words?
+	Total TEST time: 118.89506793022156 s
+	Ran 35 searches
+	Found 1623 words
+	Average search time: 3.3970019408634733 s
+	Reduction time 0.052333341326032366 s, 1.5 %
+	Matcher time 2.0049843311309816 s, 59.0 %
+	Rest 1.3396842684064592 s, 39.4 %
+	-> Weird, but I'll allow it
