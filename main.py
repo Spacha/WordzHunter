@@ -237,10 +237,14 @@ def main(letters, testfile, sorting):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Win in Sanajahti.")
-    parser.add_argument("-i", "--input", default="", type=str, help="the 4x4 grid of the letters as a string, required unless -t is used")
+
+    # either --input OR --test is required as input
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-i", "--input", default="", type=str, help="the 4x4 grid of the letters as a string, required unless -t is used")
+    group.add_argument("-t", "--test", default="", type=str, help="run a list of test grids (file name must be given) and print metrics")
+    
     parser.add_argument("-s", "--sorting", default="location", type=str, help="sorting of the results (alphabetical | length | location (default))")
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("-t", "--test", default="", type=str, help="run a list of test grids (file name must be given) and print metrics")
 
     # Validate arguments
     
